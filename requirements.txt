@@ -1,0 +1,18 @@
+# requirements.txt
+
+# Web Framework for the server UI and API
+Flask
+
+# For making HTTP requests to the Sling API
+requests
+
+# For handling JSON Web Tokens (JWT) for authentication
+PyJWT
+
+# For parsing HLS playlist (.m3u8) files
+m3u8
+
+# For handling Google Widevine CDM decryption
+# This library has its own dependencies (like pycryptodome and protobuf)
+# which pip will install automatically.
+pywidevine
