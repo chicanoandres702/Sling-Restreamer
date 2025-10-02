@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sling TCP Streamer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif; 
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
+            color: #e0e0e0; 
+            margin: 0; 
+            padding: 2em;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container { 
+            max-width: 1200px; 
+            margin: auto;
+            background: rgba(30, 30, 30, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2em;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        h1 { 
+            color: #bb86fc; 
+            border-bottom: 3px solid transparent;
+            background: linear-gradient(90deg, #bb86fc, #03dac6) padding-box, 
+                       linear-gradient(90deg, #bb86fc, #03dac6) border-box;
+            border-image: linear-gradient(90deg, #bb86fc, #03dac6) 1;
+            padding-bottom: 0.5em;
+            margin-bottom: 1em;
+            font-size: 2.5em;
+            font-weight: 300;
+            text-align: center;
+            text-shadow: 0 0 20px rgba(187, 134, 252, 0.3);
+        }
+
+        .server-info {
+            background: linear-gradient(135deg, #1f1f23 0%, #2d2d30 100%);
+            border-radius: 15px;
+            padding: 1.5em;
+            margin-bottom: 2em;
+            border: 1px solid rgba(187, 134, 252, 0.2);
+            text-align: center;
+        }
+
+        .server-info p {
+            margin: 0;
+            font-size: 1.1em;
+        }
+
+        .server-info strong {
+            color: #03dac6;
+            font-weight: 600;
+        }
+
+        h2 {
+            color: #03dac6;
+            font-size: 1.5em;
+            font-weight: 500;
+            margin: 2em 0 1em 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+        }
+
+        h2::before {
+            content: "📺";
+            font-size: 1.2em;
+        }
+
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            margin-top: 1em;
+            background: rgba(26, 26, 26, 0.6);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        th, td { 
+            padding: 16px 20px; 
+            text-align: left; 
+        }
+
+        th { 
+            background: linear-gradient(135deg, #2d2d30 0%, #1f1f23 100%);
+            color: #bb86fc;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #bb86fc;
+        }
+
+        tr { 
+            background: rgba(30, 30, 30, 0.7);
+            transition: all 0.3s ease;
+        }
+
+        tr:nth-child(even) { 
+            background: rgba(40, 40, 40, 0.7); 
+        }
+
+        tr:hover {
+            background: rgba(187, 134, 252, 0.1);
+            transform: scale(1.01);
+        }
+
+        td:first-child {
+            font-weight: 500;
+            color: #f0f0f0;
+        }
+
+        .status-badge { 
+            padding: 8px 16px; 
+            border-radius: 20px; 
+            font-size: 0.8em; 
+            font-weight: 600; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-block;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-streaming { 
+            background: linear-gradient(135deg, #4caf50, #66bb6a); 
+            color: white;
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .status-error { 
+            background: linear-gradient(135deg, #f44336, #ef5350); 
+            color: white;
+            box-shadow: 0 0 15px rgba(244, 67, 54, 0.4);
+        }
+
+        .status-initializing, .status-starting-ffmpeg, .status-authenticating { 
+            background: linear-gradient(135deg, #ff9800, #ffb74d); 
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 152, 0, 0.4);
+        }
+
+        .status-idle { 
+            background: linear-gradient(135deg, #607d8b, #78909c); 
+            color: white;
+            box-shadow: 0 0 15px rgba(96, 125, 139, 0.4);
+        }
+
+        .btn { 
+            background: linear-gradient(135deg, rgba(187, 134, 252, 0.1), rgba(187, 134, 252, 0.2));
+            border: 1px solid #bb86fc; 
+            color: #bb86fc; 
+            padding: 8px 16px; 
+            cursor: pointer; 
+            border-radius: 8px; 
+            font-size: 13px; 
+            margin: 2px; 
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn:hover { 
+            background: linear-gradient(135deg, #bb86fc, #9c27b0);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(187, 134, 252, 0.4);
+        }
+
+        .btn-stop { 
+            border-color: #cf6679; 
+            color: #cf6679;
+            background: linear-gradient(135deg, rgba(207, 102, 121, 0.1), rgba(207, 102, 121, 0.2));
+        }
+
+        .btn-stop:hover { 
+            background: linear-gradient(135deg, #cf6679, #d32f2f);
+            color: white;
+            box-shadow: 0 5px 15px rgba(207, 102, 121, 0.4);
+        }
+
+        .btn-start { 
+            border-color: #03dac6; 
+            color: #03dac6;
+            background: linear-gradient(135deg, rgba(3, 218, 198, 0.1), rgba(3, 218, 198, 0.2));
+        }
+
+        .btn-start:hover { 
+            background: linear-gradient(135deg, #03dac6, #00bcd4);
+            color: white;
+            box-shadow: 0 5px 15px rgba(3, 218, 198, 0.4);
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .uptime {
+            font-family: 'Monaco', 'Consolas', monospace;
+            background: rgba(3, 218, 198, 0.1);
+            padding: 4px 8px;
+            border-radius: 6px;
+            color: #03dac6;
+            font-size: 0.9em;
+        }
+
+        .clients-count {
+            background: rgba(187, 134, 252, 0.1);
+            color: #bb86fc;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .loading-message, .error-message {
+            text-align: center;
+            padding: 3em;
+            color: #888;
+            font-style: italic;
+        }
+
+        .error-message {
+            color: #cf6679;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            body {
+                padding: 1em;
+            }
+            
+            .container {
+                padding: 1.5em;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            table {
+                font-size: 0.9em;
+            }
+            
+            th, td {
+                padding: 12px 8px;
+            }
+            
+            .actions-cell {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .btn {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+        }
+
+        /* Smooth loading animation */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Pulse animation for streaming status */
+        .status-streaming {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 15px rgba(76, 175, 80, 0.4); }
+            50% { box-shadow: 0 0 25px rgba(76, 175, 80, 0.8); }
+            100% { box-shadow: 0 0 15px rgba(76, 175, 80, 0.4); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container fade-in">
+        <h1>Sling TCP Streamer</h1>
+        <div class="server-info">
+            <p>🌐 Server running at: <strong><span id="server-url">Loading...</span></strong></p>
+        </div>
+        
+        <h2>Channel Control</h2>
+        <table id="channels-table">
+            <thead>
+                <tr>
+                    <th>📺 Channel</th>
+                    <th>📊 Status</th>
+                    <th>⏱️ Uptime</th>
+                    <th>👥 Clients</th>
+                    <th>⚙️ Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="5" class="loading-message">Loading channels...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Use the current location instead of hardcoded values
+        const BASE_URL = `${window.location.protocol}//${window.location.host}`;
+        
+        // Update the server URL display
+        document.getElementById('server-url').textContent = BASE_URL;
+
+        // --- Helper Functions ---
+        function copyToClipboard(text, element) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => showFeedback(element));
+            } else { // Fallback for insecure contexts (like HTTP)
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed"; textArea.style.opacity = 0;
+                document.body.appendChild(textArea);
+                textArea.focus(); textArea.select();
+                try {
+                    if(document.execCommand('copy')) showFeedback(element);
+                } catch (err) { console.error('Fallback copy failed', err); }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function showFeedback(element) {
+            const originalText = element.innerText;
+            element.innerText = '✓ Copied!';
+            element.style.background = 'linear-gradient(135deg, #4caf50, #66bb6a)';
+            element.style.color = 'white';
+            setTimeout(() => { 
+                element.innerText = originalText; 
+                element.style.background = '';
+                element.style.color = '';
+            }, 2000);
+        }
+
+        function formatUptime(seconds) {
+            if (!seconds || seconds <= 0) return "--:--:--";
+            const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+            const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+            const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+            return `${h}:${m}:${s}`;
+        }
+
+        // --- API Call Functions ---
+        async function controlStream(action, channelId) {
+            try {
+                const response = await fetch(`/api/stream/${action}/${channelId}`, { method: 'POST' });
+                await response.json();
+                fetchAndRender(); // Refresh status immediately after action
+            } catch (error) {
+                console.error(`Failed to ${action} stream:`, error);
+                alert(`❌ Error: Could not ${action} stream. See console for details.`);
+            }
+        }
+
+        // --- Main Render Function ---
+        async function fetchAndRender() {
+            try {
+                const [channelsRes, statusRes] = await Promise.all([
+                    fetch('/api/channels'),
+                    fetch('/api/status')
+                ]);
+
+                // Gracefully handle if one of the fetches fails
+                if (!channelsRes.ok || !statusRes.ok) {
+                    throw new Error(`Failed to fetch data: Channels ${channelsRes.statusText}, Status ${statusRes.statusText}`);
+                }
+
+                const channels = await channelsRes.json();
+                const statuses = await statusRes.json();
+                
+                const tableBody = document.querySelector('#channels-table tbody');
+
+                if (!channels || channels.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="error-message">📭 Channel list is empty. Check server logs (SLING_JWT may be expired).</td></tr>';
+                    return;
+                }
+
+                const tableHtml = channels.map(channel => {
+                    const info = statuses[channel.id];
+                    const m3uUrl = `${BASE_URL}/stream/${channel.id}`;
+
+                    const status = info ? info.status : 'IDLE';
+                    const statusClass = `status-${status.toLowerCase().replace(/_/g, '-')}`;
+                    const uptime = info ? formatUptime(info.uptime) : '--:--:--';
+                    const clients = info ? info.clients : '0';
+
+                    let actionsHtml = '';
+                    if (status === 'IDLE') {
+                        actionsHtml = `<a href="${m3uUrl}" target="_blank" class="btn btn-start">▶️ Start Stream</a>`;
+                    } else {
+                        actionsHtml = `
+                            <button class="btn btn-stop" onclick="controlStream('stop', '${channel.id}')">⏹️ Stop</button>
+                            <button class="btn" onclick="controlStream('restart', '${channel.id}')">🔄 Restart</button>
+                        `;
+                    }
+                    actionsHtml += `<button class="btn" onclick="copyToClipboard('${m3uUrl}', this)">📋 Copy M3U</button>`;
+
+                    return `
+                        <tr>
+                            <td>${channel.title}</td>
+                            <td><span class="status-badge ${statusClass}">${status.replace(/_/g, ' ')}</span></td>
+                            <td><span class="uptime">${uptime}</span></td>
+                            <td><span class="clients-count">${clients}</span></td>
+                            <td class="actions-cell">${actionsHtml}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                tableBody.innerHTML = tableHtml;
+
+            } catch (error) {
+                console.error("Failed to fetch data:", error);
+                const tableBody = document.querySelector('#channels-table tbody');
+                tableBody.innerHTML = '<tr><td colspan="5" class="error-message">❌ Error loading data. Is the server running? Check the browser console.</td></tr>';
+            }
+        }
+        
+        // --- Initial Load & Interval ---
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAndRender();
+            setInterval(fetchAndRender, 5000);
+        });
+    </script>
+</body>
+</html>
