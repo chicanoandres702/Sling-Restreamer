@@ -27,5 +27,5 @@ A modern web-based streaming server that converts Sling TV channels into accessi
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/sling-tcp-streamer.git
-   cd sling-tcp-streamer
+   git clone https://github.com/chicanoandres702/Sling-Restreamer.git
+   cd Sling-Restreamer
