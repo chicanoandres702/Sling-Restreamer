@@ -19,7 +19,7 @@ A modern web-based streaming server that converts Sling TV channels into accessi
 
 ### Prerequisites
 
-- **Node.js** (v14 or higher)
+- **Python**
 - **FFmpeg** (installed and accessible in PATH)
 - **Sling TV Subscription** with valid JWT token
 
