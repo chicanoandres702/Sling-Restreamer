@@ -40,8 +40,8 @@ The application is managed through a user-friendly web interface built with Flas
 
 1.  **Clone the Repository**:
     ```bash
-    git clone <your-repository-url>
-    cd <repository-directory>
+    git clone https://github.com/chicanoandres702/Sling-Restreamer
+    cd Sling-Restreamer
     ```
 
 2.  **Install Dependencies**:
