@@ -39,7 +39,7 @@ FFMPEG_BIN = resource_path('ffmpeg.exe' if os.name == 'nt' else 'ffmpeg')
 TEMPLATE_FOLDER = resource_path('templates')
 STREAMS_JSON_FILE = resource_path('streams.json')
 IDLE_TIMEOUT_SECONDS = 300
-KEY_CACHE_EXPIRY_SECONDS = 3600*24*30*24*30  # 1 hour
+KEY_CACHE_EXPIRY_SECONDS = 3600*24*30  # 1 hour
 SLING_JWT = os.environ.get('SLING_JWT', "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2NvdW50U3RhdHVzIjoiYWN0aXZlIiwiZGV2IjoiNjlmYWFjOTctYmMwZi00Y2RhLTllNGYtOTZkOTk4YzQ4Nzg3IiwiaWF0IjoxNzU5MzUxOTg0LCJpc3MiOiJDTVciLCJwbGF0IjoiYnJvd3NlciIsInByb2QiOiJzbGluZyIsInByb2YiOiIyODgwYzg0NC1mMmQ1LTExZTktODMwZi0wZTIwYTUxZDhlN2MiLCJwcm9maWxlVHlwZSI6IkFkbWluIiwic3ViIjoiMjg4MGM4NDQtZjJkNS0xMWU5LTgzMGYtMGUyMGE1MWQ4ZTdjIn0.zGhss5iouL7-OV30Qf_cZlj-AoUGfqigmXBrAIp5qAk")
 
 
