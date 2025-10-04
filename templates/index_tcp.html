@@ -5,75 +5,870 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unified TCP Streamer</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0a0f; color: #e8eaed; min-height: 100vh; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
-        header { text-align: center; margin-bottom: 3rem; padding: 2rem; background: rgba(20, 20, 28, 0.6); backdrop-filter: blur(20px); border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.06); }
-        h1 { font-size: 3rem; font-weight: 700; background: linear-gradient(135deg, #bb86fc 0%, #03dac6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 1rem; }
-        .server-info { display: inline-flex; align-items: center; gap: 0.75rem; background: rgba(3, 218, 198, 0.1); padding: 0.75rem 1.5rem; border-radius: 50px; border: 1px solid rgba(3, 218, 198, 0.2); font-size: 0.95rem; margin-top: 1rem; }
-        .controls-bar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 2rem; gap: 1rem; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        .stat-card { background: rgba(20, 20, 28, 0.6); backdrop-filter: blur(20px); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.06); }
-        .stat-label { font-size: 0.85rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
-        .stat-value { font-size: 2rem; font-weight: 700; }
-        .section { margin-bottom: 2.5rem; }
-        .section-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid rgba(187, 134, 252, 0.2); }
-        .section-header h2 { font-size: 1.5rem; font-weight: 600; color: #bb86fc; display: flex; align-items: center; gap: 0.5rem; }
-        .channels-grid { display: grid; gap: 1rem; }
-        .channel-card { background: rgba(20, 20, 28, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 16px; padding: 1.5rem; transition: all 0.3s ease; display: grid; grid-template-columns: 1fr auto; gap: 1.5rem; align-items: center; }
-        .channel-info { display: flex; flex-direction: column; gap: 0.25rem; }
-        .channel-title { font-size: 1.15rem; font-weight: 600; }
-        .channel-meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
-        .meta-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: #9ca3af; }
-        .status-badge { padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-        .status-streaming { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
-        .status-error, .status-failed { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
-        .status-initializing, .status-starting-ffmpeg, .status-authenticating, .status-parsing-dash { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
-        .status-idle, .status-stopped { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
-        .btn { background: rgba(187, 134, 252, 0.1); border: 1.5px solid rgba(187, 134, 252, 0.3); color: #bb86fc; padding: 0.625rem 1.25rem; cursor: pointer; border-radius: 10px; font-size: 0.875rem; text-decoration: none; font-weight: 600; white-space: nowrap; }
-        .btn:hover { background: #bb86fc; color: #0a0a0f; }
-        .btn-stop, .btn-remove { border-color: rgba(239, 68, 68, 0.3); color: #ef4444; background: rgba(239, 68, 68, 0.1); }
-        .btn-stop:hover, .btn-remove:hover { background: #ef4444; color: white; }
-        .btn-start { border-color: rgba(34, 197, 94, 0.3); color: #22c55e; background: rgba(34, 197, 94, 0.1); }
-        .btn-start:hover { background: #22c55e; color: white; }
-        .actions-cell { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
-        .empty-state { text-align: center; padding: 2rem; background: rgba(20, 20, 28, 0.4); border-radius: 16px; border: 2px dashed rgba(255, 255, 255, 0.1); }
-        .form-card { background: rgba(20, 20, 28, 0.8); border: 1px solid rgba(187, 134, 252, 0.2); padding: 2rem; border-radius: 16px; }
-        .form-grid { display: grid; gap: 1rem; }
-        .form-grid input { width: 100%; background: #1c1c24; border: 1px solid #3a3a4a; color: #e8eaed; padding: 0.75rem; border-radius: 8px; font-size: 1rem; }
-        .form-grid input::placeholder { color: #6b7280; }
-        .form-grid .btn { justify-content: center; width: 100%; }
-        #stream-id-edit-note { font-size: 0.8em; color: #9ca3af; }
+        
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #000000;
+            color: #e8eaed; 
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* Animated particles background */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: float 20s infinite ease-in-out;
+            opacity: 0.15;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translate(0, 0) scale(1);
+                opacity: 0.15;
+            }
+            25% {
+                transform: translate(100px, -100px) scale(1.2);
+                opacity: 0.25;
+            }
+            50% {
+                transform: translate(-50px, -200px) scale(0.8);
+                opacity: 0.1;
+            }
+            75% {
+                transform: translate(-150px, -100px) scale(1.1);
+                opacity: 0.2;
+            }
+        }
+        
+        /* Animated mesh gradient background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(187, 134, 252, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(3, 218, 198, 0.18) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.12) 0%, transparent 70%),
+                radial-gradient(circle at 90% 20%, rgba(236, 72, 153, 0.15) 0%, transparent 50%);
+            animation: meshMove 25s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        @keyframes meshMove {
+            0%, 100% { 
+                opacity: 1;
+                transform: scale(1) rotate(0deg); 
+            }
+            33% { 
+                opacity: 0.8;
+                transform: scale(1.1) rotate(5deg); 
+            }
+            66% { 
+                opacity: 0.9;
+                transform: scale(0.95) rotate(-5deg); 
+            }
+        }
+        
+        .container { 
+            max-width: 1600px; 
+            margin: 0 auto; 
+            padding: 2rem; 
+            position: relative;
+            z-index: 1;
+        }
+        
+        header { 
+            text-align: center; 
+            margin-bottom: 3rem; 
+            padding: 4rem 2rem;
+            background: rgba(10, 10, 15, 0.3);
+            backdrop-filter: blur(40px) saturate(200%);
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                0 30px 80px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 0 100px rgba(187, 134, 252, 0.1);
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            transition: transform 0.3s ease;
+        }
+        
+        header:hover {
+            transform: translateY(-5px);
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+            animation: headerRotate 10s linear infinite;
+        }
+        
+        @keyframes headerRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            animation: shimmer 4s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        h1 { 
+            font-size: 5rem; 
+            font-weight: 900; 
+            background: linear-gradient(135deg, #bb86fc 0%, #8b5cf6 20%, #ec4899 40%, #03dac6 60%, #06b6d4 80%, #bb86fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            letter-spacing: -0.04em;
+            animation: gradientFlow 10s ease infinite;
+            background-size: 300% 300%;
+            filter: drop-shadow(0 0 40px rgba(187, 134, 252, 0.4));
+            position: relative;
+            z-index: 1;
+        }
+        
+        @keyframes gradientFlow {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .server-info { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 1rem;
+            background: linear-gradient(135deg, rgba(3, 218, 198, 0.2), rgba(187, 134, 252, 0.2));
+            padding: 1.2rem 2.5rem;
+            border-radius: 60px;
+            border: 2px solid rgba(3, 218, 198, 0.4);
+            font-size: 1.15rem;
+            margin-top: 1.5rem;
+            font-weight: 700;
+            box-shadow: 
+                0 10px 40px rgba(3, 218, 198, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .server-info::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 60px;
+            padding: 2px;
+            background: linear-gradient(90deg, #bb86fc, #03dac6, #ec4899, #bb86fc);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: borderRotate 3s linear infinite;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        
+        .server-info:hover::before {
+            opacity: 1;
+        }
+        
+        @keyframes borderRotate {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+        
+        .server-info:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 15px 60px rgba(3, 218, 198, 0.5);
+            border-color: rgba(3, 218, 198, 0.6);
+        }
+        
+        .controls-bar { 
+            display: flex; 
+            justify-content: flex-end; 
+            align-items: center; 
+            margin-bottom: 2rem; 
+            gap: 1rem; 
+        }
+        
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); 
+            gap: 1.5rem; 
+            margin-bottom: 3rem; 
+        }
+        
+        .stat-card { 
+            background: rgba(20, 20, 28, 0.4);
+            backdrop-filter: blur(30px) saturate(200%);
+            padding: 2.5rem;
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #bb86fc, #03dac6, #ec4899);
+            background-size: 200% 100%;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s ease;
+        }
+        
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 28px;
+            background: radial-gradient(circle at 50% 0%, rgba(187, 134, 252, 0.15), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            border-color: rgba(187, 134, 252, 0.4);
+            box-shadow: 
+                0 25px 70px rgba(187, 134, 252, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-card:hover::before {
+            transform: scaleX(1);
+            animation: statGradient 2s ease infinite;
+        }
+        
+        .stat-card:hover::after {
+            opacity: 1;
+        }
+        
+        @keyframes statGradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .stat-label { 
+            font-size: 0.8rem; 
+            color: #9ca3af; 
+            text-transform: uppercase; 
+            letter-spacing: 0.15em; 
+            margin-bottom: 1rem;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stat-value { 
+            font-size: 3.5rem; 
+            font-weight: 900;
+            line-height: 1;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stat-card:hover .stat-value {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 20px currentColor);
+        }
+        
+        .section { 
+            margin-bottom: 3rem; 
+        }
+        
+        .section-header { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            gap: 1rem; 
+            margin-bottom: 2rem; 
+            padding-bottom: 1.5rem; 
+            position: relative;
+        }
+        
+        .section-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #bb86fc, transparent);
+            animation: sectionLine 3s ease-in-out infinite;
+        }
+        
+        @keyframes sectionLine {
+            0%, 100% { opacity: 0.5; transform: scaleX(0.5); }
+            50% { opacity: 1; transform: scaleX(1); }
+        }
+        
+        .section-header h2 { 
+            font-size: 2.2rem; 
+            font-weight: 800; 
+            background: linear-gradient(135deg, #bb86fc, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex; 
+            align-items: center; 
+            gap: 1rem;
+            letter-spacing: -0.03em;
+            filter: drop-shadow(0 0 20px rgba(187, 134, 252, 0.3));
+        }
+        
+        .channels-grid { 
+            display: grid; 
+            gap: 1.5rem; 
+        }
+        
+        .channel-card { 
+            background: rgba(20, 20, 28, 0.5);
+            backdrop-filter: blur(40px) saturate(200%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 2.5rem;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 2rem;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .channel-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: linear-gradient(180deg, #bb86fc, #ec4899, #03dac6);
+            transform: scaleY(0);
+            transform-origin: bottom;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .channel-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 100% 50%, rgba(187, 134, 252, 0.1), transparent 60%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .channel-card:hover {
+            transform: translateX(12px);
+            border-color: rgba(187, 134, 252, 0.4);
+            box-shadow: 
+                0 20px 60px rgba(187, 134, 252, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .channel-card:hover::before {
+            transform: scaleY(1);
+            transform-origin: top;
+        }
+        
+        .channel-card:hover::after {
+            opacity: 1;
+        }
+        
+        .channel-info { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 0.75rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .channel-title { 
+            font-size: 1.5rem; 
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .channel-card:hover .channel-title {
+            color: #bb86fc;
+            transform: translateX(5px);
+        }
+        
+        .channel-meta { 
+            display: flex; 
+            gap: 1.5rem; 
+            flex-wrap: wrap; 
+            margin-top: 0.5rem; 
+        }
+        
+        .meta-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+            font-size: 1rem; 
+            color: #9ca3af;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        
+        .channel-card:hover .meta-item {
+            color: #c4c9d4;
+        }
+        
+        .status-badge { 
+            padding: 0.75rem 1.5rem;
+            border-radius: 14px;
+            font-size: 0.75rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .status-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .status-badge:hover {
+            transform: scale(1.08);
+        }
+        
+        .status-badge:hover::before {
+            left: 100%;
+        }
+        
+        .status-streaming { 
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.25), rgba(34, 197, 94, 0.35));
+            color: #22c55e;
+            border: 2px solid rgba(34, 197, 94, 0.5);
+            animation: statusPulse 2.5s ease-in-out infinite;
+            box-shadow: 
+                0 0 30px rgba(34, 197, 94, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+        
+        @keyframes statusPulse {
+            0%, 100% { 
+                box-shadow: 0 0 20px rgba(34, 197, 94, 0.4),
+                           inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            }
+            50% { 
+                box-shadow: 0 0 40px rgba(34, 197, 94, 0.6),
+                           0 0 60px rgba(34, 197, 94, 0.3),
+                           inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            }
+        }
+        
+        .status-error, .status-failed { 
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(239, 68, 68, 0.35));
+            color: #ef4444;
+            border: 2px solid rgba(239, 68, 68, 0.5);
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+        }
+        
+        .status-initializing, .status-starting-ffmpeg, .status-authenticating, .status-parsing-dash { 
+            background: linear-gradient(135deg, rgba(251, 146, 60, 0.25), rgba(251, 146, 60, 0.35));
+            color: #fb923c;
+            border: 2px solid rgba(251, 146, 60, 0.5);
+            box-shadow: 0 0 30px rgba(251, 146, 60, 0.4);
+            animation: statusBlink 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes statusBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .status-idle, .status-stopped { 
+            background: linear-gradient(135deg, rgba(100, 116, 139, 0.25), rgba(100, 116, 139, 0.35));
+            color: #94a3b8;
+            border: 2px solid rgba(100, 116, 139, 0.5);
+        }
+        
+        .btn { 
+            background: rgba(187, 134, 252, 0.15);
+            border: 2px solid rgba(187, 134, 252, 0.5);
+            color: #bb86fc;
+            padding: 0.85rem 1.75rem;
+            cursor: pointer;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            text-decoration: none;
+            font-weight: 800;
+            white-space: nowrap;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 4px 20px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            z-index: 1;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+            z-index: -1;
+        }
+        
+        .btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 14px;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+        
+        .btn:hover::before {
+            width: 400px;
+            height: 400px;
+        }
+        
+        .btn:hover::after {
+            transform: translateX(100%);
+        }
+        
+        .btn:hover { 
+            background: #bb86fc;
+            color: #000000;
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                0 12px 35px rgba(187, 134, 252, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border-color: #bb86fc;
+        }
+        
+        .btn:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+        
+        .btn-stop, .btn-remove { 
+            border-color: rgba(239, 68, 68, 0.5);
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.15);
+        }
+        
+        .btn-stop:hover, .btn-remove:hover { 
+            background: #ef4444;
+            color: white;
+            box-shadow: 
+                0 12px 35px rgba(239, 68, 68, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border-color: #ef4444;
+        }
+        
+        .btn-start { 
+            border-color: rgba(34, 197, 94, 0.5);
+            color: #22c55e;
+            background: rgba(34, 197, 94, 0.15);
+        }
+        
+        .btn-start:hover { 
+            background: #22c55e;
+            color: white;
+            box-shadow: 
+                0 12px 35px rgba(34, 197, 94, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border-color: #22c55e;
+        }
+        
+        .actions-cell { 
+            display: flex; 
+            gap: 0.85rem; 
+            flex-wrap: wrap; 
+            justify-content: flex-end;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .empty-state { 
+            text-align: center; 
+            padding: 5rem 2rem;
+            background: rgba(20, 20, 28, 0.3);
+            border-radius: 24px;
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            color: #6b7280;
+            font-size: 1.15rem;
+            font-weight: 600;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .empty-state::before {
+            content: '✨';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -80px);
+            font-size: 3rem;
+            opacity: 0.3;
+        }
+        
+        .empty-state:hover {
+            border-color: rgba(187, 134, 252, 0.3);
+            background: rgba(20, 20, 28, 0.5);
+            color: #9ca3af;
+        }
+        
+        .form-card { 
+            background: rgba(20, 20, 28, 0.7);
+            border: 2px solid rgba(187, 134, 252, 0.3);
+            padding: 3rem;
+            border-radius: 28px;
+            box-shadow: 
+                0 15px 60px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(40px);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .form-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(187, 134, 252, 0.1), transparent 50%);
+            animation: formGlow 8s ease-in-out infinite;
+        }
+        
+        @keyframes formGlow {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-20%, 20%); }
+        }
+        
+        .form-grid { 
+            display: grid; 
+            gap: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .form-grid input { 
+            width: 100%;
+            background: rgba(28, 28, 36, 0.9);
+            border: 2px solid #3a3a4a;
+            color: #e8eaed;
+            padding: 1.2rem 1.5rem;
+            border-radius: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .form-grid input:focus {
+            outline: none;
+            border-color: #bb86fc;
+            background: rgba(28, 28, 36, 1);
+            box-shadow: 
+                0 0 0 4px rgba(187, 134, 252, 0.15),
+                0 10px 30px rgba(187, 134, 252, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .form-grid input::placeholder { 
+            color: #6b7280; 
+        }
+        
+        .form-grid .btn { 
+            justify-content: center; 
+            width: 100%;
+            padding: 1.4rem;
+            font-size: 1.05rem;
+        }
+        
+        #stream-id-edit-note { 
+            font-size: 0.9rem; 
+            color: #fb923c;
+            padding: 1rem 1.5rem;
+            background: rgba(251, 146, 60, 0.15);
+            border-radius: 12px;
+            border: 2px solid rgba(251, 146, 60, 0.3);
+            font-weight: 600;
+        }
+        
+        /* Scroll animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .channel-card, .stat-card {
+            animation: fadeInUp 0.7s cubic-bezier(0.4, 0, 0.2, 1) backwards;
+        }
+        
+        .channel-card:nth-child(1), .stat-card:nth-child(1) { animation-delay: 0.05s; }
+        .channel-card:nth-child(2), .stat-card:nth-child(2) { animation-delay: 0.1s; }
+        .channel-card:nth-child(3), .stat-card:nth-child(3) { animation-delay: 0.15s; }
+        .channel-card:nth-child(4), .stat-card:nth-child(4) { animation-delay: 0.2s; }
+        .channel-card:nth-child(5), .stat-card:nth-child(5) { animation-delay: 0.25s; }
+        .channel-card:nth-child(n+6) { animation-delay: 0.3s; }
+        
+        /* Loading indicator */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            h1 { font-size: 3rem; }
+            .channel-card { grid-template-columns: 1fr; gap: 1.5rem; }
+            .actions-cell { justify-content: flex-start; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
     </style>
 </head>
 <body>
+    <div class="particles" id="particles"></div>
+    
     <div class="container">
-        <header><h1>Unified Streamer</h1><div class="server-info"><strong>{{ server_ip }}:{{ server_port }}</strong></div></header>
+        <header>
+            <h1>⚡ Unified Streamer</h1>
+            <div class="server-info">
+                <span>🌐</span>
+                <strong>{{ server_ip }}:{{ server_port }}</strong>
+            </div>
+        </header>
+        
         <div class="stats-grid">
-            <div class="stat-card"><div class="stat-label">Sling Channels</div><div class="stat-value" id="total-channels" style="color: #e8eaed;">0</div></div>
-            <div class="stat-card"><div class="stat-label">Custom Streams</div><div class="stat-value" id="custom-count" style="color: #e8eaed;">0</div></div>
-            <div class="stat-card"><div class="stat-label">Active Streams</div><div class="stat-value" id="active-count" style="color: #22c55e;">0</div></div>
-            <div class="stat-card"><div class="stat-label">Total Clients</div><div class="stat-value" id="total-clients" style="color: #bb86fc;">0</div></div>
+            <div class="stat-card">
+                <div class="stat-label">Sling Channels</div>
+                <div class="stat-value" id="total-channels" style="color: #e8eaed;">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Custom Streams</div>
+                <div class="stat-value" id="custom-count" style="color: #e8eaed;">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Streams</div>
+                <div class="stat-value" id="active-count" style="color: #22c55e;">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Clients</div>
+                <div class="stat-value" id="total-clients" style="color: #bb86fc;">0</div>
+            </div>
         </div>
-        <div class="controls-bar"><button id="generate-m3u-btn" class="btn btn-start">📋 Generate M3U Playlist</button></div>
-        <div id="active-streams-container" class="section" style="display: none;"><div class="section-header"><h2>⚡ Active Streams</h2></div><div class="channels-grid" id="active-channels-grid"></div></div>
+        
+        <div class="controls-bar">
+            <button id="generate-m3u-btn" class="btn btn-start">📋 Generate M3U Playlist</button>
+        </div>
+        
+        <div id="active-streams-container" class="section" style="display: none;">
+            <div class="section-header">
+                <h2>⚡ Active Streams</h2>
+            </div>
+            <div class="channels-grid" id="active-channels-grid"></div>
+        </div>
+        
         <div id="custom-streams-section" class="section">
-            <div class="section-header"><h2>🛰️ Custom DASH Streams</h2><button class="btn btn-start" id="toggle-form-btn">➕ Add Stream</button></div>
-            <div id="add-stream-form-container" style="display:none; margin-bottom: 1.5rem;">
+            <div class="section-header">
+                <h2>🛰️ Custom DASH Streams</h2>
+                <button class="btn btn-start" id="toggle-form-btn">➕ Add Stream</button>
+            </div>
+            <div id="add-stream-form-container" style="display:none; margin-bottom: 2rem;">
                 <div class="form-card">
                     <form id="add-stream-form" class="form-grid">
                         <input type="text" id="stream-title" placeholder="Stream Title (e.g., My Live Channel)" required>
                         <input type="text" id="stream-id" placeholder="Stream ID (e.g., my-live-channel, optional)">
-                        <span id="stream-id-edit-note" style="display: none;">The Stream ID cannot be changed during an edit.</span>
+                        <span id="stream-id-edit-note" style="display: none;">⚠️ The Stream ID cannot be changed during an edit.</span>
                         <input type="url" id="stream-mpd" placeholder="MPD URL (https://...)" required>
                         <input type="text" id="stream-key" placeholder="Decryption Key (e.g., a1b2c3d4...)" required>
                         <button type="submit" class="btn btn-start" id="form-submit-btn">Add Custom Stream</button>
                     </form>
                 </div>
             </div>
-            <div class="channels-grid" id="custom-channels-grid"><div class="empty-state">No custom streams configured.</div></div>
+            <div class="channels-grid" id="custom-channels-grid">
+                <div class="empty-state">No custom streams configured.</div>
+            </div>
         </div>
-        <div id="all-channels-container" class="section"><div class="section-header"><h2>📺 Available Sling Channels</h2></div><div class="channels-grid" id="all-channels-grid"><div class="empty-state">Loading channels...</div></div></div>
+        
+        <div id="all-channels-container" class="section">
+            <div class="section-header">
+                <h2>📺 Available Sling Channels</h2>
+            </div>
+            <div class="channels-grid" id="all-channels-grid">
+                <div class="empty-state">Loading channels...</div>
+            </div>
+        </div>
     </div>
 
 <script>
@@ -82,10 +877,60 @@
     let currentEditId = null;
     let allCustomStreamsData = {};
 
-    async function controlStream(action, streamId) { await fetch(`/api/stream/${action}/${streamId}`, { method: 'POST' }); fetchAndRender(); }
-    async function removeCustomStream(streamId) { if (!confirm(`Are you sure you want to remove stream "${streamId}"?`)) return; await fetch(`/api/streams/${streamId}`, { method: 'DELETE' }); fetchAndRender(); }
-    function copyToClipboard(text, element) { navigator.clipboard.writeText(text).then(() => { const o = element.innerHTML; element.innerHTML = '✓ Copied!'; element.style.borderColor = '#22c55e'; setTimeout(() => { element.innerHTML = o; element.style.borderColor = ''; }, 2000); }); }
-    function formatUptime(s) { if (!s || s <= 0) return "--:--:--"; const h = Math.floor(s / 3600).toString().padStart(2, '0'); const m = Math.floor((s % 3600) / 60).toString().padStart(2, '0'); const sec = Math.floor(s % 60).toString().padStart(2, '0'); return `${h}:${m}:${sec}`; }
+    // Create animated particles
+    function createParticles() {
+        const container = document.getElementById('particles');
+        const colors = ['#bb86fc', '#03dac6', '#ec4899', '#8b5cf6'];
+        const particleCount = 15;
+        
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.width = Math.random() * 100 + 50 + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+            particle.style.animationDelay = Math.random() * 20 + 's';
+            particle.style.animationDuration = (Math.random() * 10 + 15) + 's';
+            container.appendChild(particle);
+        }
+    }
+    
+    createParticles();
+
+    async function controlStream(action, streamId) { 
+        await fetch(`/api/stream/${action}/${streamId}`, { method: 'POST' }); 
+        fetchAndRender(); 
+    }
+    
+    async function removeCustomStream(streamId) { 
+        if (!confirm(`Are you sure you want to remove stream "${streamId}"?`)) return; 
+        await fetch(`/api/streams/${streamId}`, { method: 'DELETE' }); 
+        fetchAndRender(); 
+    }
+    
+    function copyToClipboard(text, element) { 
+        navigator.clipboard.writeText(text).then(() => { 
+            const o = element.innerHTML; 
+            element.innerHTML = '✓ Copied!'; 
+            element.style.borderColor = '#22c55e'; 
+            element.style.background = 'rgba(34, 197, 94, 0.3)';
+            setTimeout(() => { 
+                element.innerHTML = o; 
+                element.style.borderColor = ''; 
+                element.style.background = '';
+            }, 2000); 
+        }); 
+    }
+    
+    function formatUptime(s) { 
+        if (!s || s <= 0) return "--:--:--"; 
+        const h = Math.floor(s / 3600).toString().padStart(2, '0'); 
+        const m = Math.floor((s % 3600) / 60).toString().padStart(2, '0'); 
+        const sec = Math.floor(s % 60).toString().padStart(2, '0'); 
+        return `${h}:${m}:${sec}`; 
+    }
 
     function showFormForEdit(streamId) {
         const streamData = allCustomStreamsData[streamId];
@@ -139,31 +984,134 @@
             allCustomStreamsData = await customStreamsRes.json();
             const statuses = await statusRes.json();
             const allConfiguredStreams = [...slingChannels.map(c => ({...c, type: 'sling'})), ...Object.entries(allCustomStreamsData).map(([id, config]) => ({...config, id, type: 'dash'}))];
-            const activeGrid = document.getElementById('active-channels-grid'), customGrid = document.getElementById('custom-channels-grid'), slingGrid = document.getElementById('all-channels-grid');
-            activeGrid.innerHTML = ''; customGrid.innerHTML = ''; slingGrid.innerHTML = '';
-            let activeStreams = [], totalClients = 0;
-            allConfiguredStreams.forEach(stream => {
-                const statusInfo = statuses[stream.id];
-                const card = createChannelCard(stream, statusInfo);
-                if (statusInfo) { activeStreams.push(card); totalClients += statusInfo.clients || 0; }
-                else if (stream.type === 'dash') customGrid.appendChild(card);
-                else if (stream.type === 'sling') slingGrid.appendChild(card);
-            });
-            const activeContainer = document.getElementById('active-streams-container');
-            if (activeStreams.length > 0) { activeStreams.forEach(card => activeGrid.appendChild(card)); activeContainer.style.display = 'block'; } else { activeContainer.style.display = 'none'; }
-            if (customGrid.innerHTML === '') customGrid.innerHTML = '<div class="empty-state">No idle custom streams.</div>';
-            if (slingGrid.innerHTML === '') slingGrid.innerHTML = '<div class="empty-state">No idle Sling channels.</div>';
+            
+            // Update stats smoothly
             document.getElementById('total-channels').textContent = slingChannels.length;
             document.getElementById('custom-count').textContent = Object.keys(allCustomStreamsData).length;
-            document.getElementById('active-count').textContent = activeStreams.length;
+            
+            let totalClients = 0;
+            const activeStreamIds = new Set();
+            const customStreamIds = new Set();
+            const slingStreamIds = new Set();
+            
+            allConfiguredStreams.forEach(stream => {
+                const statusInfo = statuses[stream.id];
+                if (statusInfo) {
+                    activeStreamIds.add(stream.id);
+                    totalClients += statusInfo.clients || 0;
+                } else if (stream.type === 'dash') {
+                    customStreamIds.add(stream.id);
+                } else if (stream.type === 'sling') {
+                    slingStreamIds.add(stream.id);
+                }
+            });
+            
+            document.getElementById('active-count').textContent = activeStreamIds.size;
             document.getElementById('total-clients').textContent = totalClients;
+            
+            // Update grids only if content has changed
+            updateGrid('active-channels-grid', allConfiguredStreams, statuses, activeStreamIds, 'active');
+            updateGrid('custom-channels-grid', allConfiguredStreams, statuses, customStreamIds, 'custom');
+            updateGrid('all-channels-grid', allConfiguredStreams, statuses, slingStreamIds, 'sling');
+            
+            const activeContainer = document.getElementById('active-streams-container');
+            activeContainer.style.display = activeStreamIds.size > 0 ? 'block' : 'none';
         } catch (error) { console.error("Failed to fetch data:", error); }
+    }
+    
+    function updateGrid(gridId, allStreams, statuses, streamIds, gridType) {
+        const grid = document.getElementById(gridId);
+        
+        // Build new list of cards
+        const newCards = [];
+        allStreams.forEach(stream => {
+            if (!streamIds.has(stream.id)) return;
+            const statusInfo = gridType === 'active' ? statuses[stream.id] : (gridType === stream.type ? null : undefined);
+            if (statusInfo === undefined) return;
+            
+            // Always check all grids for existing card
+            let card = document.querySelector(`[data-stream-id="${stream.id}"]`);
+            if (card) {
+                // Update existing card content
+                updateCardContent(card, stream, statusInfo);
+                // Move card to correct grid if it's in the wrong place
+                if (card.parentElement.id !== gridId) {
+                    card.remove();
+                    grid.appendChild(card);
+                }
+            } else {
+                // Create new card
+                card = createChannelCard(stream, statusInfo);
+                card.dataset.streamId = stream.id;
+                card.dataset.wasActive = (!!statusInfo).toString();
+                grid.appendChild(card);
+            }
+            newCards.push(stream.id);
+        });
+        
+        // Remove cards from this grid that shouldn't be here
+        Array.from(grid.querySelectorAll('[data-stream-id]')).forEach(card => {
+            const streamId = card.dataset.streamId;
+            if (!newCards.includes(streamId)) {
+                card.remove();
+            }
+        });
+        
+        // Handle empty state
+        if (newCards.length === 0) {
+            const emptyMessage = gridType === 'active' ? 'No active streams.' : 
+                               gridType === 'custom' ? 'No idle custom streams.' : 
+                               'No idle Sling channels.';
+            if (!grid.querySelector('.empty-state')) {
+                grid.innerHTML = `<div class="empty-state">${emptyMessage}</div>`;
+            }
+        } else {
+            // Remove empty state if exists
+            const emptyState = grid.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+        }
+    }
+    
+    function updateCardContent(card, stream, statusInfo) {
+        // For status changes (idle to active or vice versa), recreate the card entirely
+        const isActive = !!statusInfo;
+        const wasActive = card.dataset.wasActive === 'true';
+        
+        if (isActive !== wasActive) {
+            // Status changed, need to recreate with different buttons
+            const newCard = createChannelCard(stream, statusInfo);
+            newCard.dataset.streamId = stream.id;
+            newCard.dataset.wasActive = isActive.toString();
+            card.replaceWith(newCard);
+            return;
+        }
+        
+        // Just update the dynamic content
+        const statusBadge = card.querySelector('.status-badge');
+        const metaItems = card.querySelectorAll('.meta-item');
+        
+        if (statusInfo && statusBadge) {
+            const status = statusInfo.status || 'IDLE';
+            const statusClass = `status-${status.toLowerCase().replace(/_/g, '-')}`;
+            statusBadge.className = `status-badge ${statusClass}`;
+            statusBadge.textContent = status.replace(/_/g, ' ');
+            
+            // Update uptime and clients
+            metaItems.forEach(item => {
+                const spans = item.querySelectorAll('span');
+                if (spans[0]?.textContent === '⏱️') {
+                    spans[1].textContent = formatUptime(statusInfo.uptime);
+                } else if (spans[0]?.textContent === '👥') {
+                    spans[1].textContent = statusInfo.clients || 0;
+                }
+            });
+        }
     }
 
     document.getElementById('toggle-form-btn').addEventListener('click', () => { 
         const formContainer = document.getElementById('add-stream-form-container');
         if (formContainer.style.display === 'none') {
-            resetAndHideForm(); // Ensure form is clean before showing
+            resetAndHideForm();
             formContainer.style.display = 'block';
         } else {
             resetAndHideForm();
