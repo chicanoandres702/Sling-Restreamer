@@ -1,4 +1,5 @@
 # Sling TV & Custom DRM Streamer
+<img width="1440" height="900" alt="image" src="https://github.com/user-attachments/assets/47b3b569-2eed-43bf-8c17-8fb92bc6d436" />
 
 This project is a powerful, Python-based application designed to restream video content from various sources, with a primary focus on Sling TV. It handles DRM-protected streams (Widevine for Sling, CENC for others) and converts them into a standard, unencrypted MPEG-TS format. This output is then made available over a simple TCP connection, compatible with a wide range of media players like VLC, or via an HLS playlist for web players.
 
