@@ -2,449 +2,219 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sling TCP Streamer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified TCP Streamer</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif; 
-            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a1a 100%);
-            color: #e0e0e0; 
-            margin: 0; 
-            padding: 2em;
-            min-height: 100vh;
-            line-height: 1.6;
-        }
-
-        .container { 
-            max-width: 1200px; 
-            margin: auto;
-            background: rgba(30, 30, 30, 0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 2em;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        h1 { 
-            color: #bb86fc; 
-            border-bottom: 3px solid transparent;
-            background: linear-gradient(90deg, #bb86fc, #03dac6) padding-box, 
-                       linear-gradient(90deg, #bb86fc, #03dac6) border-box;
-            border-image: linear-gradient(90deg, #bb86fc, #03dac6) 1;
-            padding-bottom: 0.5em;
-            margin-bottom: 1em;
-            font-size: 2.5em;
-            font-weight: 300;
-            text-align: center;
-            text-shadow: 0 0 20px rgba(187, 134, 252, 0.3);
-        }
-
-        .server-info {
-            background: linear-gradient(135deg, #1f1f23 0%, #2d2d30 100%);
-            border-radius: 15px;
-            padding: 1.5em;
-            margin-bottom: 2em;
-            border: 1px solid rgba(187, 134, 252, 0.2);
-            text-align: center;
-        }
-
-        .server-info p {
-            margin: 0;
-            font-size: 1.1em;
-        }
-
-        .server-info strong {
-            color: #03dac6;
-            font-weight: 600;
-        }
-
-        h2 {
-            color: #03dac6;
-            font-size: 1.5em;
-            font-weight: 500;
-            margin: 2em 0 1em 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5em;
-        }
-
-        h2::before {
-            content: "📺";
-            font-size: 1.2em;
-        }
-
-        table { 
-            border-collapse: collapse; 
-            width: 100%; 
-            margin-top: 1em;
-            background: rgba(26, 26, 26, 0.6);
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        th, td { 
-            padding: 16px 20px; 
-            text-align: left; 
-        }
-
-        th { 
-            background: linear-gradient(135deg, #2d2d30 0%, #1f1f23 100%);
-            color: #bb86fc;
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.85em;
-            letter-spacing: 1px;
-            border-bottom: 2px solid #bb86fc;
-        }
-
-        tr { 
-            background: rgba(30, 30, 30, 0.7);
-            transition: all 0.3s ease;
-        }
-
-        tr:nth-child(even) { 
-            background: rgba(40, 40, 40, 0.7); 
-        }
-
-        tr:hover {
-            background: rgba(187, 134, 252, 0.1);
-            transform: scale(1.01);
-        }
-
-        td:first-child {
-            font-weight: 500;
-            color: #f0f0f0;
-        }
-
-        .status-badge { 
-            padding: 8px 16px; 
-            border-radius: 20px; 
-            font-size: 0.8em; 
-            font-weight: 600; 
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: inline-block;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .status-streaming { 
-            background: linear-gradient(135deg, #4caf50, #66bb6a); 
-            color: white;
-            box-shadow: 0 0 15px rgba(76, 175, 80, 0.4);
-        }
-
-        .status-error { 
-            background: linear-gradient(135deg, #f44336, #ef5350); 
-            color: white;
-            box-shadow: 0 0 15px rgba(244, 67, 54, 0.4);
-        }
-
-        .status-initializing, .status-starting-ffmpeg, .status-authenticating { 
-            background: linear-gradient(135deg, #ff9800, #ffb74d); 
-            color: white;
-            box-shadow: 0 0 15px rgba(255, 152, 0, 0.4);
-        }
-
-        .status-idle { 
-            background: linear-gradient(135deg, #607d8b, #78909c); 
-            color: white;
-            box-shadow: 0 0 15px rgba(96, 125, 139, 0.4);
-        }
-
-        .btn { 
-            background: linear-gradient(135deg, rgba(187, 134, 252, 0.1), rgba(187, 134, 252, 0.2));
-            border: 1px solid #bb86fc; 
-            color: #bb86fc; 
-            padding: 8px 16px; 
-            cursor: pointer; 
-            border-radius: 8px; 
-            font-size: 13px; 
-            margin: 2px; 
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn:hover { 
-            background: linear-gradient(135deg, #bb86fc, #9c27b0);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(187, 134, 252, 0.4);
-        }
-
-        .btn-stop { 
-            border-color: #cf6679; 
-            color: #cf6679;
-            background: linear-gradient(135deg, rgba(207, 102, 121, 0.1), rgba(207, 102, 121, 0.2));
-        }
-
-        .btn-stop:hover { 
-            background: linear-gradient(135deg, #cf6679, #d32f2f);
-            color: white;
-            box-shadow: 0 5px 15px rgba(207, 102, 121, 0.4);
-        }
-
-        .btn-start { 
-            border-color: #03dac6; 
-            color: #03dac6;
-            background: linear-gradient(135deg, rgba(3, 218, 198, 0.1), rgba(3, 218, 198, 0.2));
-        }
-
-        .btn-start:hover { 
-            background: linear-gradient(135deg, #03dac6, #00bcd4);
-            color: white;
-            box-shadow: 0 5px 15px rgba(3, 218, 198, 0.4);
-        }
-
-        .actions-cell {
-            display: flex;
-            gap: 4px;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .uptime {
-            font-family: 'Monaco', 'Consolas', monospace;
-            background: rgba(3, 218, 198, 0.1);
-            padding: 4px 8px;
-            border-radius: 6px;
-            color: #03dac6;
-            font-size: 0.9em;
-        }
-
-        .clients-count {
-            background: rgba(187, 134, 252, 0.1);
-            color: #bb86fc;
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-weight: 600;
-        }
-
-        .loading-message, .error-message {
-            text-align: center;
-            padding: 3em;
-            color: #888;
-            font-style: italic;
-        }
-
-        .error-message {
-            color: #cf6679;
-        }
-
-        /* Responsive design */
-        @media (max-width: 768px) {
-            body {
-                padding: 1em;
-            }
-            
-            .container {
-                padding: 1.5em;
-            }
-            
-            h1 {
-                font-size: 2em;
-            }
-            
-            table {
-                font-size: 0.9em;
-            }
-            
-            th, td {
-                padding: 12px 8px;
-            }
-            
-            .actions-cell {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .btn {
-                font-size: 12px;
-                padding: 6px 12px;
-            }
-        }
-
-        /* Smooth loading animation */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Pulse animation for streaming status */
-        .status-streaming {
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 15px rgba(76, 175, 80, 0.4); }
-            50% { box-shadow: 0 0 25px rgba(76, 175, 80, 0.8); }
-            100% { box-shadow: 0 0 15px rgba(76, 175, 80, 0.4); }
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0a0a0f; color: #e8eaed; min-height: 100vh; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        header { text-align: center; margin-bottom: 3rem; padding: 2rem; background: rgba(20, 20, 28, 0.6); backdrop-filter: blur(20px); border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.06); }
+        h1 { font-size: 3rem; font-weight: 700; background: linear-gradient(135deg, #bb86fc 0%, #03dac6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 1rem; }
+        .server-info { display: inline-flex; align-items: center; gap: 0.75rem; background: rgba(3, 218, 198, 0.1); padding: 0.75rem 1.5rem; border-radius: 50px; border: 1px solid rgba(3, 218, 198, 0.2); font-size: 0.95rem; margin-top: 1rem; }
+        .controls-bar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 2rem; gap: 1rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: rgba(20, 20, 28, 0.6); backdrop-filter: blur(20px); padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.06); }
+        .stat-label { font-size: 0.85rem; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+        .stat-value { font-size: 2rem; font-weight: 700; }
+        .section { margin-bottom: 2.5rem; }
+        .section-header { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid rgba(187, 134, 252, 0.2); }
+        .section-header h2 { font-size: 1.5rem; font-weight: 600; color: #bb86fc; display: flex; align-items: center; gap: 0.5rem; }
+        .channels-grid { display: grid; gap: 1rem; }
+        .channel-card { background: rgba(20, 20, 28, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 16px; padding: 1.5rem; transition: all 0.3s ease; display: grid; grid-template-columns: 1fr auto; gap: 1.5rem; align-items: center; }
+        .channel-info { display: flex; flex-direction: column; gap: 0.25rem; }
+        .channel-title { font-size: 1.15rem; font-weight: 600; }
+        .channel-meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .meta-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: #9ca3af; }
+        .status-badge { padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .status-streaming { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+        .status-error, .status-failed { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+        .status-initializing, .status-starting-ffmpeg, .status-authenticating, .status-parsing-dash { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
+        .status-idle, .status-stopped { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
+        .btn { background: rgba(187, 134, 252, 0.1); border: 1.5px solid rgba(187, 134, 252, 0.3); color: #bb86fc; padding: 0.625rem 1.25rem; cursor: pointer; border-radius: 10px; font-size: 0.875rem; text-decoration: none; font-weight: 600; white-space: nowrap; }
+        .btn:hover { background: #bb86fc; color: #0a0a0f; }
+        .btn-stop, .btn-remove { border-color: rgba(239, 68, 68, 0.3); color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .btn-stop:hover, .btn-remove:hover { background: #ef4444; color: white; }
+        .btn-start { border-color: rgba(34, 197, 94, 0.3); color: #22c55e; background: rgba(34, 197, 94, 0.1); }
+        .btn-start:hover { background: #22c55e; color: white; }
+        .actions-cell { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
+        .empty-state { text-align: center; padding: 2rem; background: rgba(20, 20, 28, 0.4); border-radius: 16px; border: 2px dashed rgba(255, 255, 255, 0.1); }
+        .form-card { background: rgba(20, 20, 28, 0.8); border: 1px solid rgba(187, 134, 252, 0.2); padding: 2rem; border-radius: 16px; }
+        .form-grid { display: grid; gap: 1rem; }
+        .form-grid input { width: 100%; background: #1c1c24; border: 1px solid #3a3a4a; color: #e8eaed; padding: 0.75rem; border-radius: 8px; font-size: 1rem; }
+        .form-grid input::placeholder { color: #6b7280; }
+        .form-grid .btn { justify-content: center; width: 100%; }
+        #stream-id-edit-note { font-size: 0.8em; color: #9ca3af; }
     </style>
 </head>
 <body>
-    <div class="container fade-in">
-        <h1>Sling TCP Streamer</h1>
-        <div class="server-info">
-            <p>🌐 Server running at: <strong><span id="server-url">Loading...</span></strong></p>
+    <div class="container">
+        <header><h1>Unified Streamer</h1><div class="server-info"><strong>{{ server_ip }}:{{ server_port }}</strong></div></header>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Sling Channels</div><div class="stat-value" id="total-channels" style="color: #e8eaed;">0</div></div>
+            <div class="stat-card"><div class="stat-label">Custom Streams</div><div class="stat-value" id="custom-count" style="color: #e8eaed;">0</div></div>
+            <div class="stat-card"><div class="stat-label">Active Streams</div><div class="stat-value" id="active-count" style="color: #22c55e;">0</div></div>
+            <div class="stat-card"><div class="stat-label">Total Clients</div><div class="stat-value" id="total-clients" style="color: #bb86fc;">0</div></div>
         </div>
-        
-        <h2>Channel Control</h2>
-        <table id="channels-table">
-            <thead>
-                <tr>
-                    <th>📺 Channel</th>
-                    <th>📊 Status</th>
-                    <th>⏱️ Uptime</th>
-                    <th>👥 Clients</th>
-                    <th>⚙️ Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td colspan="5" class="loading-message">Loading channels...</td>
-                </tr>
-            </tbody>
-        </table>
+        <div class="controls-bar"><button id="generate-m3u-btn" class="btn btn-start">📋 Generate M3U Playlist</button></div>
+        <div id="active-streams-container" class="section" style="display: none;"><div class="section-header"><h2>⚡ Active Streams</h2></div><div class="channels-grid" id="active-channels-grid"></div></div>
+        <div id="custom-streams-section" class="section">
+            <div class="section-header"><h2>🛰️ Custom DASH Streams</h2><button class="btn btn-start" id="toggle-form-btn">➕ Add Stream</button></div>
+            <div id="add-stream-form-container" style="display:none; margin-bottom: 1.5rem;">
+                <div class="form-card">
+                    <form id="add-stream-form" class="form-grid">
+                        <input type="text" id="stream-title" placeholder="Stream Title (e.g., My Live Channel)" required>
+                        <input type="text" id="stream-id" placeholder="Stream ID (e.g., my-live-channel, optional)">
+                        <span id="stream-id-edit-note" style="display: none;">The Stream ID cannot be changed during an edit.</span>
+                        <input type="url" id="stream-mpd" placeholder="MPD URL (https://...)" required>
+                        <input type="text" id="stream-key" placeholder="Decryption Key (e.g., a1b2c3d4...)" required>
+                        <button type="submit" class="btn btn-start" id="form-submit-btn">Add Custom Stream</button>
+                    </form>
+                </div>
+            </div>
+            <div class="channels-grid" id="custom-channels-grid"><div class="empty-state">No custom streams configured.</div></div>
+        </div>
+        <div id="all-channels-container" class="section"><div class="section-header"><h2>📺 Available Sling Channels</h2></div><div class="channels-grid" id="all-channels-grid"><div class="empty-state">Loading channels...</div></div></div>
     </div>
 
-    <script>
-        // Use the current location instead of hardcoded values
-        const BASE_URL = `${window.location.protocol}//${window.location.host}`;
-        
-        // Update the server URL display
-        document.getElementById('server-url').textContent = BASE_URL;
+<script>
+    const SERVER_IP = "{{ server_ip }}";
+    const SERVER_PORT = "{{ server_port }}";
+    let currentEditId = null;
+    let allCustomStreamsData = {};
 
-        // --- Helper Functions ---
-        function copyToClipboard(text, element) {
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(text).then(() => showFeedback(element));
-            } else { // Fallback for insecure contexts (like HTTP)
-                const textArea = document.createElement("textarea");
-                textArea.value = text;
-                textArea.style.position = "fixed"; textArea.style.opacity = 0;
-                document.body.appendChild(textArea);
-                textArea.focus(); textArea.select();
-                try {
-                    if(document.execCommand('copy')) showFeedback(element);
-                } catch (err) { console.error('Fallback copy failed', err); }
-                document.body.removeChild(textArea);
-            }
+    async function controlStream(action, streamId) { await fetch(`/api/stream/${action}/${streamId}`, { method: 'POST' }); fetchAndRender(); }
+    async function removeCustomStream(streamId) { if (!confirm(`Are you sure you want to remove stream "${streamId}"?`)) return; await fetch(`/api/streams/${streamId}`, { method: 'DELETE' }); fetchAndRender(); }
+    function copyToClipboard(text, element) { navigator.clipboard.writeText(text).then(() => { const o = element.innerHTML; element.innerHTML = '✓ Copied!'; element.style.borderColor = '#22c55e'; setTimeout(() => { element.innerHTML = o; element.style.borderColor = ''; }, 2000); }); }
+    function formatUptime(s) { if (!s || s <= 0) return "--:--:--"; const h = Math.floor(s / 3600).toString().padStart(2, '0'); const m = Math.floor((s % 3600) / 60).toString().padStart(2, '0'); const sec = Math.floor(s % 60).toString().padStart(2, '0'); return `${h}:${m}:${sec}`; }
+
+    function showFormForEdit(streamId) {
+        const streamData = allCustomStreamsData[streamId];
+        if (!streamData) return;
+        currentEditId = streamId;
+        document.getElementById('stream-title').value = streamData.title;
+        document.getElementById('stream-id').value = streamId;
+        document.getElementById('stream-id').disabled = true;
+        document.getElementById('stream-id-edit-note').style.display = 'block';
+        document.getElementById('stream-mpd').value = streamData.mpd_url;
+        document.getElementById('stream-key').value = streamData.key;
+        document.getElementById('form-submit-btn').textContent = 'Update Stream';
+        const formContainer = document.getElementById('add-stream-form-container');
+        formContainer.style.display = 'block';
+        formContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function resetAndHideForm() {
+        currentEditId = null;
+        document.getElementById('add-stream-form').reset();
+        document.getElementById('stream-id').disabled = false;
+        document.getElementById('stream-id-edit-note').style.display = 'none';
+        document.getElementById('form-submit-btn').textContent = 'Add Custom Stream';
+        document.getElementById('add-stream-form-container').style.display = 'none';
+    }
+
+    function createChannelCard(stream, statusInfo) {
+        const streamId = stream.id;
+        const status = statusInfo ? statusInfo.status : 'IDLE';
+        const isIdle = !statusInfo;
+        const streamUrl = `http://${SERVER_IP}:${SERVER_PORT}/stream/${streamId}`;
+        const statusClass = `status-${(status || 'idle').toLowerCase().replace(/_/g, '-')}`;
+        const card = document.createElement('div');
+        card.className = 'channel-card';
+        let metaHtml = `<span class="status-badge ${statusClass}">${(status || 'idle').replace(/_/g, ' ')}</span>`;
+        if (statusInfo) metaHtml += `<div class="meta-item"><span>⏱️</span><span>${formatUptime(statusInfo.uptime)}</span></div><div class="meta-item"><span>👥</span><span>${statusInfo.clients || 0}</span></div>`;
+        let actionsHtml = isIdle ? `<button class="btn btn-start" onclick="controlStream('start', '${streamId}')">▶️ Start</button>` : `<button class="btn" onclick="controlStream('restart', '${streamId}')">🔄 Restart</button><button class="btn btn-stop" onclick="controlStream('stop', '${streamId}')">⏹️ Stop</button>`;
+        actionsHtml += `<button class="btn" onclick="copyToClipboard('${streamUrl}', this)">📋 Copy URL</button>`;
+        if (stream.type === 'dash') {
+            if (isIdle) actionsHtml += `<button class="btn" onclick="showFormForEdit('${streamId}')">✏️ Edit</button>`;
+            actionsHtml += `<button class="btn btn-remove" onclick="removeCustomStream('${streamId}')">🗑️ Remove</button>`;
+        }
+        card.innerHTML = `<div class="channel-info"><div class="channel-title">${stream.type === 'sling' ? '📺' : '🛰️'} ${stream.title}</div><div class="channel-meta">${metaHtml}</div></div><div class="actions-cell">${actionsHtml}</div>`;
+        return card;
+    }
+
+    async function fetchAndRender() {
+        try {
+            const [slingChannelsRes, customStreamsRes, statusRes] = await Promise.all([fetch('/api/channels'), fetch('/api/streams'), fetch('/api/status')]);
+            const slingChannels = await slingChannelsRes.json();
+            allCustomStreamsData = await customStreamsRes.json();
+            const statuses = await statusRes.json();
+            const allConfiguredStreams = [...slingChannels.map(c => ({...c, type: 'sling'})), ...Object.entries(allCustomStreamsData).map(([id, config]) => ({...config, id, type: 'dash'}))];
+            const activeGrid = document.getElementById('active-channels-grid'), customGrid = document.getElementById('custom-channels-grid'), slingGrid = document.getElementById('all-channels-grid');
+            activeGrid.innerHTML = ''; customGrid.innerHTML = ''; slingGrid.innerHTML = '';
+            let activeStreams = [], totalClients = 0;
+            allConfiguredStreams.forEach(stream => {
+                const statusInfo = statuses[stream.id];
+                const card = createChannelCard(stream, statusInfo);
+                if (statusInfo) { activeStreams.push(card); totalClients += statusInfo.clients || 0; }
+                else if (stream.type === 'dash') customGrid.appendChild(card);
+                else if (stream.type === 'sling') slingGrid.appendChild(card);
+            });
+            const activeContainer = document.getElementById('active-streams-container');
+            if (activeStreams.length > 0) { activeStreams.forEach(card => activeGrid.appendChild(card)); activeContainer.style.display = 'block'; } else { activeContainer.style.display = 'none'; }
+            if (customGrid.innerHTML === '') customGrid.innerHTML = '<div class="empty-state">No idle custom streams.</div>';
+            if (slingGrid.innerHTML === '') slingGrid.innerHTML = '<div class="empty-state">No idle Sling channels.</div>';
+            document.getElementById('total-channels').textContent = slingChannels.length;
+            document.getElementById('custom-count').textContent = Object.keys(allCustomStreamsData).length;
+            document.getElementById('active-count').textContent = activeStreams.length;
+            document.getElementById('total-clients').textContent = totalClients;
+        } catch (error) { console.error("Failed to fetch data:", error); }
+    }
+
+    document.getElementById('toggle-form-btn').addEventListener('click', () => { 
+        const formContainer = document.getElementById('add-stream-form-container');
+        if (formContainer.style.display === 'none') {
+            resetAndHideForm(); // Ensure form is clean before showing
+            formContainer.style.display = 'block';
+        } else {
+            resetAndHideForm();
+        }
+    });
+    
+    document.getElementById('add-stream-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const payload = {
+            title: document.getElementById('stream-title').value,
+            mpd_url: document.getElementById('stream-mpd').value,
+            key: document.getElementById('stream-key').value
+        };
+
+        let url, method;
+
+        if (currentEditId) {
+            method = 'PUT';
+            url = `/api/streams/${currentEditId}`;
+        } else {
+            method = 'POST';
+            url = '/api/streams';
+            payload.id = document.getElementById('stream-id').value;
         }
 
-        function showFeedback(element) {
-            const originalText = element.innerText;
-            element.innerText = '✓ Copied!';
-            element.style.background = 'linear-gradient(135deg, #4caf50, #66bb6a)';
-            element.style.color = 'white';
-            setTimeout(() => { 
-                element.innerText = originalText; 
-                element.style.background = '';
-                element.style.color = '';
-            }, 2000);
-        }
-
-        function formatUptime(seconds) {
-            if (!seconds || seconds <= 0) return "--:--:--";
-            const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
-            const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
-            const s = Math.floor(seconds % 60).toString().padStart(2, '0');
-            return `${h}:${m}:${s}`;
-        }
-
-        // --- API Call Functions ---
-        async function controlStream(action, channelId) {
-            try {
-                const response = await fetch(`/api/stream/${action}/${channelId}`, { method: 'POST' });
-                await response.json();
-                fetchAndRender(); // Refresh status immediately after action
-            } catch (error) {
-                console.error(`Failed to ${action} stream:`, error);
-                alert(`❌ Error: Could not ${action} stream. See console for details.`);
-            }
-        }
-
-        // --- Main Render Function ---
-        async function fetchAndRender() {
-            try {
-                const [channelsRes, statusRes] = await Promise.all([
-                    fetch('/api/channels'),
-                    fetch('/api/status')
-                ]);
-
-                // Gracefully handle if one of the fetches fails
-                if (!channelsRes.ok || !statusRes.ok) {
-                    throw new Error(`Failed to fetch data: Channels ${channelsRes.statusText}, Status ${statusRes.statusText}`);
-                }
-
-                const channels = await channelsRes.json();
-                const statuses = await statusRes.json();
-                
-                const tableBody = document.querySelector('#channels-table tbody');
-
-                if (!channels || channels.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="5" class="error-message">📭 Channel list is empty. Check server logs (SLING_JWT may be expired).</td></tr>';
-                    return;
-                }
-
-                const tableHtml = channels.map(channel => {
-                    const info = statuses[channel.id];
-                    const m3uUrl = `${BASE_URL}/stream/${channel.id}`;
-
-                    const status = info ? info.status : 'IDLE';
-                    const statusClass = `status-${status.toLowerCase().replace(/_/g, '-')}`;
-                    const uptime = info ? formatUptime(info.uptime) : '--:--:--';
-                    const clients = info ? info.clients : '0';
-
-                    let actionsHtml = '';
-                    if (status === 'IDLE') {
-                        actionsHtml = `<a href="${m3uUrl}" target="_blank" class="btn btn-start">▶️ Start Stream</a>`;
-                    } else {
-                        actionsHtml = `
-                            <button class="btn btn-stop" onclick="controlStream('stop', '${channel.id}')">⏹️ Stop</button>
-                            <button class="btn" onclick="controlStream('restart', '${channel.id}')">🔄 Restart</button>
-                        `;
-                    }
-                    actionsHtml += `<button class="btn" onclick="copyToClipboard('${m3uUrl}', this)">📋 Copy M3U</button>`;
-
-                    return `
-                        <tr>
-                            <td>${channel.title}</td>
-                            <td><span class="status-badge ${statusClass}">${status.replace(/_/g, ' ')}</span></td>
-                            <td><span class="uptime">${uptime}</span></td>
-                            <td><span class="clients-count">${clients}</span></td>
-                            <td class="actions-cell">${actionsHtml}</td>
-                        </tr>
-                    `;
-                }).join('');
-
-                tableBody.innerHTML = tableHtml;
-
-            } catch (error) {
-                console.error("Failed to fetch data:", error);
-                const tableBody = document.querySelector('#channels-table tbody');
-                tableBody.innerHTML = '<tr><td colspan="5" class="error-message">❌ Error loading data. Is the server running? Check the browser console.</td></tr>';
-            }
-        }
-        
-        // --- Initial Load & Interval ---
-        document.addEventListener('DOMContentLoaded', () => {
-            fetchAndRender();
-            setInterval(fetchAndRender, 5000);
+        const response = await fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
         });
-    </script>
+        
+        if (response.ok) {
+            resetAndHideForm();
+            fetchAndRender();
+        } else {
+            const result = await response.json();
+            alert(`Error: ${result.message}`);
+        }
+    });
+    
+    document.getElementById('generate-m3u-btn').addEventListener('click', async () => {
+        const [slingRes, customRes] = await Promise.all([fetch('/api/channels'), fetch('/api/streams')]);
+        const allStreams = [...await slingRes.json(), ...Object.entries(await customRes.json()).map(([id, c]) => ({...c, id}))].sort((a,b) => a.title.localeCompare(b.title));
+        let m3uContent = '#EXTM3U\n';
+        allStreams.forEach(s => { m3uContent += `#EXTINF:-1,${s.title}\nhttp://${SERVER_IP}:${SERVER_PORT}/stream/${s.id}\n`; });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([m3uContent], {type: 'application/vnd.apple.mpegurl'})); a.download = 'streams.m3u'; a.click();
+    });
+
+    fetchAndRender();
+    setInterval(fetchAndRender, 5000);
+</script>
 </body>
 </html>
