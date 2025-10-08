@@ -85,7 +85,7 @@ class SlingClient:
         payload={'subscriber_id':self._subscriber_id,'drm':'widevine','qvt':f'https://cbd46b77.cdn.cms.movetv.com/playermetadata/sling/v1/api/channels/{channel_id}/current/schedule.qvt','os_version':'10','device_name':'browser','os_name':'Windows','brand':'sling','account_status':'active','advertiser_id':None,'support_mode':'false','ssai_vod':'true','ssai_dvr':'true',}
         try:
             response=requests.post(self.config.SLING_STREAM_AUTH_URL,headers=headers,json=payload,timeout=20); response.raise_for_status(); data=response.json()
-            stream_manifest_url=data.get('ssai_manifest','')
+            stream_manifest_url=data.get('m3u8_url','')
             key_manifest_url=data.get('m3u8_url')
             temp_jwt=data.get('jwt')
             if not stream_manifest_url or not temp_jwt or not key_manifest_url: raise ValueError("Stream auth response missing data.")
@@ -739,3 +739,4 @@ if __name__ == '__main__':
     atexit.register(shutdown_handler); signal.signal(signal.SIGINT, shutdown_handler); signal.signal(signal.SIGTERM, shutdown_handler)
     
     run_web_server()
+
